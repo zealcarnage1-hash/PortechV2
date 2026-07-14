@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import ScrollExpansionHero from "./components/ui/scroll-expansion-hero";
 import "./styles.css";
 import "./overrides.css";
+import { supabase } from "./lib/supabase";
+import AdminPortal from "./components/AdminPortal";
 
 const A = "https://portech.in/assets/img/";
 type Service = {
@@ -858,6 +860,7 @@ function Article({ slug }: { slug: string }) {
     );
 }
 function Contact() {
+    const [sent, setSent] = useState(false);
     return (
         <>
             <Intro kicker="CONTACT" title="Connect with us">
@@ -884,30 +887,50 @@ function Contact() {
                         Mumbai-400 706
                     </p>
                 </div>
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        alert("Thank you. Your message has been recorded.");
-                    }}
-                >
-                    <label>
-                        Name
-                        <input required placeholder="Your name" />
-                    </label>
-                    <label>
-                        Phone
-                        <input required placeholder="Your phone number" />
-                    </label>
-                    <label>
-                        E-mail
-                        <input required type="email" placeholder="you@company.com" />
-                    </label>
-                    <label>
-                        Message
-                        <textarea required placeholder="Tell us about your requirement" />
-                    </label>
-                    <button>Submit enquiry ↗</button>
-                </form>
+                {sent ? (
+                    <div className="success-message" style={{ padding: '40px', background: 'var(--pale, #eef6ff)', borderRadius: '12px', textAlign: 'center', margin: 'auto 0' }}>
+                        <h3 style={{ color: 'var(--navy, #061e45)', marginBottom: '8px', fontSize: '24px' }}>Thank you!</h3>
+                        <p style={{ color: 'var(--grey, #667085)', margin: '0' }}>Your message has been successfully recorded. We will be in touch shortly.</p>
+                    </div>
+                ) : (
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            const formData = new FormData(e.currentTarget);
+                            const data = {
+                                name: formData.get('name'),
+                                phone: formData.get('phone'),
+                                email: formData.get('email'),
+                                message: formData.get('message')
+                            };
+                            const { error } = await supabase.from('contact_submissions').insert([data]);
+                            if (error) {
+                                alert("There was an error submitting your message. Please try again.");
+                                console.error(error);
+                            } else {
+                                setSent(true);
+                            }
+                        }}
+                    >
+                        <label>
+                            Name
+                            <input name="name" required placeholder="Your name" />
+                        </label>
+                        <label>
+                            Phone
+                            <input name="phone" required placeholder="Your phone number" />
+                        </label>
+                        <label>
+                            E-mail
+                            <input name="email" required type="email" placeholder="you@company.com" />
+                        </label>
+                        <label>
+                            Message
+                            <textarea name="message" required placeholder="Tell us about your requirement" />
+                        </label>
+                        <button type="submit">Submit enquiry ↗</button>
+                    </form>
+                )}
             </section>
         </>
     );
@@ -951,28 +974,67 @@ function Career() {
                     </p>
                 ) : (
                     <form
-                        onSubmit={(e) => {
+                        onSubmit={async (e) => {
                             e.preventDefault();
-                            setSent(true);
+                            const formData = new FormData(e.currentTarget);
+                            const data: any = {
+                                name: String(formData.get('name') || ''),
+                                email: String(formData.get('email') || ''),
+                                phone: String(formData.get('phone') || ''),
+                                role: String(formData.get('role') || ''),
+                                experience: String(formData.get('experience') || '')
+                            };
+                            
+                            try {
+                                const fileInput = (e.currentTarget as any).querySelector('input[type="file"]');
+                                if (fileInput && fileInput.files.length > 0) {
+                                    const file = fileInput.files[0];
+                                    const fileExt = file.name.split('.').pop();
+                                    const fileName = `${Date.now()}-${Math.round(Math.random()*1000)}.${fileExt}`;
+                                    const { data: uploadData, error: uploadError } = await supabase.storage.from('resumes').upload(fileName, file);
+                                    
+                                    if (uploadError) {
+                                        alert(`Resume Upload Error: ${uploadError.message}\n\nPlease make sure you created a storage bucket named "resumes" and set it to Public.`);
+                                        return;
+                                    }
+
+                                    if (uploadData) {
+                                        const { data: publicUrlData } = supabase.storage.from('resumes').getPublicUrl(fileName);
+                                        data.resume_url = publicUrlData.publicUrl;
+                                    }
+                                }
+
+                                const { error } = await supabase.from('career_applications').insert([data]);
+                                if (error) {
+                                    alert(`Database Error: ${error.message}\n\nPlease make sure you ran the SQL script to create the career_applications table and its RLS policies!`);
+                                    console.error('Supabase Error:', error);
+                                } else {
+                                    setSent(true);
+                                }
+                            } catch (err: any) {
+                                alert(`Unexpected Error: ${err.message || err}`);
+                                console.error('Unexpected Error:', err);
+                            }
                         }}
                     >
-                        <input required placeholder="Full name" />
-                        <input required type="email" placeholder="Email address" />
-                        <input placeholder="Phone number" />
-                        <select required defaultValue="" aria-label="Position of interest">
+                        <input name="name" required placeholder="Full name" />
+                        <input name="email" required type="email" placeholder="Email address" />
+                        <input name="phone" placeholder="Phone number" />
+                        <select name="role" required defaultValue="" aria-label="Position of interest">
                             <option value="" disabled>Position of interest</option>
                             {OPEN_POSITIONS.map(x => (
                                 <option key={x} value={x}>{x}</option>
                             ))}
                         </select>
                         <textarea
+                            name="experience"
                             required
                             placeholder="Tell us briefly about your experience"
                         />
                         <label className="file">
-                            Attach résumé <input type="file" accept=".pdf,.doc,.docx" />
+                            Attach résumé <input name="resume" type="file" accept=".pdf,.doc,.docx" />
                         </label>
-                        <button>Send application ↗</button>
+                        <button type="submit">Send application ↗</button>
                     </form>
                 )}
             </section>
@@ -1286,6 +1348,7 @@ function App() {
             <Projects kind={p.startsWith("completed") ? "completed" : "ongoing"} />
         );
     else if (p === "blog.php") body = <Blog />;
+    else if (p === "admin") return <AdminPortal />;
     else if (services.find((s) => s.slug === p))
         body = <ServicePage service={services.find((s) => s.slug === p)!} />;
     else if (

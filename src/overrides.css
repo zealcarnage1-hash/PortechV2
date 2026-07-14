@@ -431,3 +431,99 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* --- CAREER POSITIONS STYLING --- */
+.positions {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.positions article {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: rgba(255, 255, 255, 0.77) !important;
+  backdrop-filter: blur(17px);
+  -webkit-backdrop-filter: blur(17px);
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 10px 30px #06346b14 !important;
+  border-radius: 18px !important;
+  padding: 28px 36px !important;
+  margin-bottom: 24px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.positions article:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 20px 40px #06346b24 !important;
+  border-color: var(--blue, #0d63ce) !important;
+  background: #ffffff !important;
+}
+
+.positions article span {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  color: var(--blue, #0d63ce) !important;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.positions article div {
+  flex: 1;
+  margin-left: 28px !important;
+}
+
+.positions article h3 {
+  margin: 0 0 6px 0 !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: var(--navy, #061e45) !important;
+  letter-spacing: -0.02em !important;
+}
+
+.positions article p {
+  margin: 0 !important;
+  font-size: 15px !important;
+  color: var(--grey, #667085) !important;
+  font-weight: 500 !important;
+}
+
+.positions article a {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 14px 28px !important;
+  background: var(--pale, #eef6ff) !important;
+  color: var(--blue, #0d63ce) !important;
+  font-weight: 700 !important;
+  border-radius: 12px !important;
+  text-decoration: none !important;
+  font-size: 15px !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+  border: none !important;
+}
+
+.positions article a:hover {
+  background: var(--blue, #0d63ce) !important;
+  color: #fff !important;
+}
+
+@media (max-width: 768px) {
+  .positions article {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 24px !important;
+    gap: 16px !important;
+  }
+  
+  .positions article div {
+    margin-left: 0 !important;
+  }
+  
+  .positions article a {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
